@@ -1,0 +1,16 @@
+[project]
+name = "ecommerse-recommender-bots"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "crewai>=0.193.2",
+    "crewai-tools>=0.73.1",
+    "ddgs",
+    "fastapi",
+    "langchain>=0.3.27",
+    "langchain-community",
+    "langchain-google-genai",
+    "langgraph",
+]
