@@ -1,0 +1,233 @@
+{
+  "name": "Diagnostic Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "1cb6566b-f59c-45cc-b96d-aed3d901fe6e",
+      "name": "When Executed by Another Workflow",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.query }}",
+        "options": {
+          "systemMessage": "#Role\nYou are a Diagnostic Services Agent that helps users find diagnostic tests, health packages, and preparation instructions. You answer concisely, without repeating irrelevant data.\n \n# Tools:\nYou are connected to tools:\n \n**LabTests** : Is used to search for test and diagnostic information.These are the table fields separated by comma:\n \nProvider ID,Hospital Name,Address,City,State,ZIP Code,County Name,Phone Number,Hospital Type,Hospital Ownership,Emergency Services,Meets criteria for meaningful use of EHRs, Diagnostic Test, Health Package, Preparation Instructions\n \nYou are expected to search Diagnostic Test, Health Package, Preparation Instructions columns when preparing your response for queries regarding tests or diagnostics, or preparation for a specific health package or test. You are also an intelligent agent to find the right hospitals in a certain state or city where the test or health package available, if needed. You are intelligent enough to search through the tool provided to you and provide response even if the input query does not have all the required information. You will not bother the user by asking repeated questions to rephrase the query\n \n#Guidelines:\nYou should be able to understand the user query and provide the response. Do not ask the user to rephrase the query\n \nNever retrieve full rows or unrelated columns. Only extract these fields:\n \nDiagnostic Test\n \nHealth Package\n \nPreparation Instructions\n \nHospital Name\n \nCity\n \nSummarize preparation instructions in <20 words when sending SMS.\n \n# Workflow\nIdentify user intent:\n \n✅ Looking for hospitals/tests (filter by location + test type)\n \n✅ Asking about preparation (fetch test name + short preparation note)\n \nQuery lab_tests_sheet using only necessary filters.\n \nReturn up to 5 most relevant results.\n \nAsk user if they want an SMS reminder.\n \nIf yes → ask for phone number (international format) → send via send_sms.\n \nResponse Format (Compact)\nFor each result:\n \n🧪 Test: <Diagnostic Test>\n🏥 Hospital: <Hospital Name>, <City>\n⚠️ Prep: <short Preparation Instructions>\n \nSMS Format\njson\nCopy\nEdit\n{\n  \"tool\": \"send_sms\",\n  \"input\": {\n    \"to\": \"<user_phone_number>\",\n    \"message\": \"Reminder: Your '<Diagnostic Test>' requires: <short prep>. – HealthSense AI\"\n  }\n}\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        208,
+        0
+      ],
+      "id": "e3226845-bf6f-459c-b8aa-f9120f5bbbf1",
+      "name": "Diagnostic Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-5-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        192,
+        192
+      ],
+      "id": "c5a8f3b1-8ae6-48a7-acc7-25341da9849e",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "V0S8FitoF6RvlTFI",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1x_BA5nTGG1mcW_YOo4-07KaCm5vXfmZcZzjA4EOjC50",
+          "mode": "list",
+          "cachedResultName": "Lab_Tests_Trimmed_Aug3",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1x_BA5nTGG1mcW_YOo4-07KaCm5vXfmZcZzjA4EOjC50/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 2127435257,
+          "mode": "list",
+          "cachedResultName": "Lab_Tests_Trimmed_Aug3",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1x_BA5nTGG1mcW_YOo4-07KaCm5vXfmZcZzjA4EOjC50/edit#gid=2127435257"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Diagnostic Test"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        368,
+        208
+      ],
+      "id": "5ff89072-c5be-46ed-a905-b5164772334b",
+      "name": "LabTests",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "9XpQagZoIExCGEvG",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1zDu0QOQokmhySkm6udAjPoG5Zh6JTcuV1iMyKNYq5LY",
+          "mode": "list",
+          "cachedResultName": "Hospital_General_Info_Trim_Aug3",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1zDu0QOQokmhySkm6udAjPoG5Zh6JTcuV1iMyKNYq5LY/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1702811926,
+          "mode": "list",
+          "cachedResultName": "Hospital_General_Information_Tr",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1zDu0QOQokmhySkm6udAjPoG5Zh6JTcuV1iMyKNYq5LY/edit#gid=1702811926"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        464,
+        192
+      ],
+      "id": "ba71ed21-c174-47fe-bfc2-428db8fab401",
+      "name": "HospitalsLists",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "9XpQagZoIExCGEvG",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "from": "+14155238886",
+        "to": "={{ $fromAI('To', ``, 'string') }}",
+        "toWhatsapp": true,
+        "message": "Hi From tool",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.twilioTool",
+      "typeVersion": 1,
+      "position": [
+        592,
+        80
+      ],
+      "id": "0d3a9c4a-a597-412a-bccf-defb4778dfad",
+      "name": "Send an SMS/MMS/WhatsApp message in Twilio",
+      "credentials": {
+        "twilioApi": {
+          "id": "8w3qvrOB6hlwYELz",
+          "name": "Twilio account 2"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Diagnostic Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Diagnostic Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LabTests": {
+      "ai_tool": [
+        [
+          {
+            "node": "Diagnostic Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HospitalsLists": {
+      "ai_tool": [
+        [
+          {
+            "node": "Diagnostic Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Diagnostic Agent": {
+      "main": [
+        []
+      ]
+    },
+    "Send an SMS/MMS/WhatsApp message in Twilio": {
+      "ai_tool": [
+        [
+          {
+            "node": "Diagnostic Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "a6461935-ff0f-4827-b910-45fe3162f18e",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "2fc82cd40b3ca773d28ba84b1abb63c37a528971f19fe066efca79df4dc9572c"
+  },
+  "id": "Mud5hs1EWlmXxWKE",
+  "tags": []
+}

@@ -1,0 +1,209 @@
+{
+  "name": "Doctor Booking Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        1104,
+        -64
+      ],
+      "id": "f3d18402-1a39-436e-ac2a-c0af83fe44b2",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1w-hSOpgr_r1BB3msNTeKnUlhAb4mW-jLiKGG1Fd6jBg",
+          "mode": "list",
+          "cachedResultName": "doctors_slots_data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1w-hSOpgr_r1BB3msNTeKnUlhAb4mW-jLiKGG1Fd6jBg/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1079878661,
+          "mode": "list",
+          "cachedResultName": "doctors_slots_data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1w-hSOpgr_r1BB3msNTeKnUlhAb4mW-jLiKGG1Fd6jBg/edit#gid=1079878661"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "doctor_id",
+              "lookupValue": "={{ $fromAI('id', `doctor id in data`, 'number') }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.5,
+      "position": [
+        1376,
+        176
+      ],
+      "id": "c1b0c8a3-9e1e-4d5d-9d87-418887de0f48",
+      "name": "doctor_slots",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "9XpQagZoIExCGEvG",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1aDC8qVqzc5sMDy8TOe5SWILm3t0Z2ZlKVtdjDUU9Zsw",
+          "mode": "list",
+          "cachedResultName": "doctors_info_data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1aDC8qVqzc5sMDy8TOe5SWILm3t0Z2ZlKVtdjDUU9Zsw/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1603983468,
+          "mode": "list",
+          "cachedResultName": "doctors_info_data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1aDC8qVqzc5sMDy8TOe5SWILm3t0Z2ZlKVtdjDUU9Zsw/edit#gid=1603983468"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.5,
+      "position": [
+        1488,
+        176
+      ],
+      "id": "58c88bf0-7b99-476a-925e-29f971143759",
+      "name": "doctors_info",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "9XpQagZoIExCGEvG",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Booking Agent\n",
+        "height": 540,
+        "width": 820
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        976,
+        -144
+      ],
+      "id": "e07de3c7-f314-41dc-a7fd-e244935a2e27",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o",
+          "mode": "list",
+          "cachedResultName": "gpt-4o"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1200,
+        176
+      ],
+      "id": "39a66e29-af62-4a4a-92ec-c9fc6314541e",
+      "name": "OpenAI Chat Model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "V0S8FitoF6RvlTFI",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.query }}",
+        "options": {
+          "systemMessage": "=# Role:\nYou are a healthcare appointment agent. You help users find and confirm doctor appointments using connected tools.\n\n# Behavior\n\n- Use `doctors_slots` to query available times. Each slot has doctor_id, datetime, is_available.\n- Use `doctor_info` to look up doctor details and return id, name, specialization, contact.\n- Use the id field from doctor_info to query from the doctors_slots tool.\n\n\n# General Workflow:\n1. Extract doctor name or specialty from user input.\n2. Look up matching doctors in `doctor_info` and return all matching fields.\n3. Query `doctors_slots` for future slots (`is_available = 1`) for those doctors\n4. Return the **first available slot** for each matching doctor.\n5. Ask for user confirmation before proceeding.\n6. Upon confirmation, ask for their email address.\n7. Send an email via the `email_user` tool with the appointment details.\n\n# Guidelines:\n- Based on the user input, you may start from the begining or middle of workflow.\n- If the user doesn’t specify a doctor or specialty, ask for one.\n- If the user input has all the appointment information (the doctor's name and date and time of slot details), proceed to get the email to send confirmation.\n- If the user input has all the appointment information (the doctor's name and date, time of slot details) AND the email , send a confirmation email.\n- Do NOT re-fetch doctor or slot data unless no context is provided.\n\n\n# Format:\nWhen suggesting a slot, present it in this markdown format:\n\n> **Doctor:** <doctor_name>  \n> **Specialization:** <specialty>  \n> **Next Available:** <datetime>  \n> **Contact:** <contact_number>\n \n\nIf the email is provided, call the tool like this:\n\n```json\n{\n  \"tool\": \"email_user\",\n  \"input\": {\n    \"to\": \"<user_email>\",\n    \"subject\": \"Appointment Confirmation\",\n    \"body\": \"Your appointment with Dr. <doctor_name> (Specialty: <specialty>) is confirmed for <datetime>. Contact: <contact>.\"\n  }\n}\n\n# Additional Guidelines:\nAlways prioritize the earliest available."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.9,
+      "position": [
+        1344,
+        -64
+      ],
+      "id": "5d16ca98-8088-4b2e-9f94-19cec3ebb9de",
+      "name": "Doctor Booking Agent"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Doctor Booking Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "doctor_slots": {
+      "ai_tool": [
+        [
+          {
+            "node": "Doctor Booking Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "doctors_info": {
+      "ai_tool": [
+        [
+          {
+            "node": "Doctor Booking Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Doctor Booking Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "5f8356f1-869f-4223-9335-82e4f3708297",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "2fc82cd40b3ca773d28ba84b1abb63c37a528971f19fe066efca79df4dc9572c"
+  },
+  "id": "T6avjdwbzpqpgFmA",
+  "tags": []
+}
